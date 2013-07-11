@@ -1,0 +1,64 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# the "1;" part means "bold"
+my %codes = (
+	'red' => '1;31',
+	'green' => '1;32',
+	'yellow' => '1;33',
+	'blue' => '1;34',
+	'magenta' => '1;35',
+	'cyan' => '1;36',
+	'white' => '1;37',
+);
+
+# create abbreviations like -r from --red
+my @orig_keys = keys %codes;
+for my $key (@orig_keys) {
+	$codes{substr($key, 0, 1)} = $codes{$key};
+}
+
+sub usage {
+	print STDERR "USAGE: stuff | hilite --red red_regex -b blue_regex ...\n";
+	print "\n";
+	print "Recognized colors:\n";
+	print "  " . join(', ', keys %codes) . "\n";
+	print "\n";
+	print "Protip: you can use `less -R' to page colorized output.\n";
+}
+
+my @substitutions = ();
+
+# parse the command line
+while (my $arg = shift) {
+	if ($arg eq '--help') {
+		usage();
+		exit(0);
+	}
+
+	if (my ($color) = $arg =~ m/--?(.*)/) {
+		unless (exists $codes{$color}) {
+			print STDERR "Unrecognized color: $color\n";
+			usage();
+			exit(1);
+		}
+
+		my $regex = shift;
+		push @substitutions, {regex => qr/$regex/, code => $codes{$color}};
+		next;
+	}
+
+	print STDERR "Wrong argument: $arg\n";
+	usage();
+	exit(1);
+}
+
+# finally, read input lines and perform substitutions
+while (<>) {
+	for my $s (@substitutions) {
+		s/$s->{regex}/\e[$s->{code}m$&\e[0m/g;
+	}
+
+	print;
+}
