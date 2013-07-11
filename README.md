@@ -4,7 +4,7 @@ Trivial terminal output colorizer.
 
 ## USAGE:
 
- stuff | hilite --red red_regex -b blue_regex ...
+> stuff | hilite --red red_regex -b blue_regex ...
 
 Recognized colors:
  * -w, --white,
